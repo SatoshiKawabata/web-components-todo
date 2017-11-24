@@ -1,63 +1,68 @@
+import VirtualDom from './virtual-dom.js';
+
 export default class TodoList extends HTMLElement {
-    static get observedAttributes() {
-        return [];
-    }
+  static get observedAttributes() {
+    return [];
+  }
 
-    constructor() {
-        super();
-        this.attachShadow({
-            mode: 'open'
-        }).innerHTML = `
-            <input type="text">
-            <button>add</button>
-        `;
-    }
+  constructor() {
+    super();
+    this.attachShadow({
+      mode: 'open'
+    });
 
-    connectedCallback() {
-        this.shadowRoot.querySelector('button').addEventListener('click', () => {
-            const input = this.shadowRoot.querySelector('input');
-            const { value } = input;
-            const todo = document.createElement('c-todo');
-            todo.setAttribute('content', value);
-            this.shadowRoot.appendChild(todo);
+    this.onClickAdd = this.onClickAdd.bind(this);
+    this.onDelete = this.onDelete.bind(this);
+    this.updateState({ todos: [] });
+  }
 
-            todo.addEventListener('delete', () => {
-                const todoElms = this.shadowRoot.querySelectorAll('c-todo');
-                for (let i = 0; i < todoElms.length; i++) {
-                    if (todoElms[i] === todo) {
-                        this.shadowRoot.removeChild(todoElms[i]);
-                    }
-                }
-            });
+  updateState(state) {
+    const { todos } = state;
+    this.state = state;
+    const node = VirtualDom.h('div', {},
+      VirtualDom.h('input', { type: 'text'}),
+      VirtualDom.h('button', {
+        onclick: this.onClickAdd
+      }, 'add'),
+      ...todos.map((todo, i) => {
+        return VirtualDom.h('c-todo', {
+          content: todo,
+          ondelete: this.onDelete.bind(this, i)
         });
-    }
+      })
+    );
+    VirtualDom.updateElement(this.shadowRoot, node, this.currentNode);
+    this.currentNode = node;
+  }
 
-    disconnectedCallback() {
-        console.log('disconnectedCallback', this);
-	}
+  onDelete(i, e) {
+    console.log(e);
+    this.state.todos.splice(i, 1);
+    this.updateState(this.state);
+  }
 
-	attributeChangedCallback(attributeName, oldValue, newValue, namespace) {
-        console.log('attributeChangeedCallback', this, attributeName, oldValue, newValue, namespace);
-	}
+  onClickAdd() {
+    const input = this.shadowRoot.querySelector('input');
+    const { value } = input;
+    this.state.todos.push(value);
+    this.updateState(this.state);
+  }
 
-	adoptedCallback(oldDocument, newDocument) {
-		console.log('adoptedCallback', this);
-    }
+  connectedCallback() {}
 
-    addTodos(todos) {
-        const self = this;
-        todos.forEach(value => {
-            const todo = document.createElement('c-todo');
-            todo.setAttribute('content', value);
-            this.shadowRoot.appendChild(todo);
-            todo.addEventListener('delete', () => {
-                const todoElms = this.shadowRoot.querySelectorAll('c-todo');
-                for (let i = 0; i < todoElms.length; i++) {
-                    if (todoElms[i] === todo) {
-                        this.shadowRoot.removeChild(todoElms[i]);
-                    }
-                }
-            });
-        });
-    }
+  disconnectedCallback() {
+    console.log('disconnectedCallback', this);
+  }
+
+  attributeChangedCallback(attributeName, oldValue, newValue, namespace) {
+    console.log('attributeChangeedCallback', this, attributeName, oldValue, newValue, namespace);
+  }
+
+  adoptedCallback(oldDocument, newDocument) {
+    console.log('adoptedCallback', this);
+  }
+
+  addTodos(todos) {
+    this.updateState({ todos });
+  }
 }
