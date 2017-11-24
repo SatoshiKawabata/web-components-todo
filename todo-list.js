@@ -2,7 +2,7 @@ import VirtualDom from './virtual-dom.js';
 
 export default class TodoList extends HTMLElement {
   static get observedAttributes() {
-    return [];
+    return ['todo'];
   }
 
   constructor() {
@@ -20,6 +20,11 @@ export default class TodoList extends HTMLElement {
     const { todos } = state;
     this.state = state;
     const node = VirtualDom.h('div', {},
+      VirtualDom.h('style', {}, `
+        .todo {
+          color: red;
+        }
+      `),
       VirtualDom.h('input', { type: 'text'}),
       VirtualDom.h('button', {
         onclick: this.onClickAdd
@@ -27,7 +32,8 @@ export default class TodoList extends HTMLElement {
       ...todos.map((todo, i) => {
         return VirtualDom.h('c-todo', {
           content: todo,
-          ondelete: this.onDelete.bind(this, i)
+          ondelete: this.onDelete.bind(this, i),
+          class: 'todo'
         });
       })
     );
@@ -36,7 +42,6 @@ export default class TodoList extends HTMLElement {
   }
 
   onDelete(i, e) {
-    console.log(e);
     this.state.todos.splice(i, 1);
     this.updateState(this.state);
   }
@@ -48,7 +53,10 @@ export default class TodoList extends HTMLElement {
     this.updateState(this.state);
   }
 
-  connectedCallback() {}
+  connectedCallback() {
+    console.log('connectedCallback', this);
+    this.updateState({ todos: this.props.todos });
+  }
 
   disconnectedCallback() {
     console.log('disconnectedCallback', this);
@@ -60,9 +68,5 @@ export default class TodoList extends HTMLElement {
 
   adoptedCallback(oldDocument, newDocument) {
     console.log('adoptedCallback', this);
-  }
-
-  addTodos(todos) {
-    this.updateState({ todos });
   }
 }

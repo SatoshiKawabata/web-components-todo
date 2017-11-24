@@ -32,24 +32,25 @@ export default class VirtualDom {
   static setProp($target, name, value) {
     if (this.isCustomProp(name)) {
       return;
-    } else if (name === 'className') {
-      $target.setAttribute('class', value);
     } else if (typeof value === 'boolean') {
       this.setBooleanProp($target, name, value);
-    } else {
+    } else if (typeof value === 'string' || typeof value === 'number') {
       $target.setAttribute(name, value);
     }
+    $target.props || ($target.props = {});
+    $target.props[name] = value;
   }
 
   static removeProp($target, name, value) {
     if (this.isCustomProp(name)) {
       return;
-    } else if (name === 'className') {
-      $target.removeAttribute('class');
     } else if (typeof value === 'boolean') {
       this.removeBooleanProp($target, name);
-    } else {
+    } else if (typeof value === 'string' || typeof value === 'number') {
       $target.removeAttribute(name);
+    }
+    if ($target.props) {
+      delete $target.props[name];
     }
   }
 
@@ -99,10 +100,11 @@ export default class VirtualDom {
   }
 
   static changed(node1, node2) {
-    return typeof node1 !== typeof node2 ||
-        typeof node1 === 'string' && node1 !== node2 ||
-        node1.type !== node2.type ||
-        node1.props && node1.props.forceUpdate;
+    return
+      typeof node1 !== typeof node2 ||
+      typeof node1 === 'string' && node1 !== node2 ||
+      node1.type !== node2.type ||
+      node1.props && node1.props.forceUpdate;
   }
 
   static updateElement($parent, newNode, oldNode, index = 0) {
