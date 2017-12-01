@@ -26,6 +26,23 @@ export default class Todo extends HTMLElement {
 	attributeChangedCallback(attributeName, oldValue, newValue, namespace) {
         console.log('attributeChangeedCallback', this, attributeName, oldValue, newValue, namespace);
         if (attributeName === 'content') {
+            if (newValue.indexOf('high') > -1) {
+                this.shadowRoot.innerHTML += `
+                    <style>
+                        .text {
+                            color: red;
+                        }
+                    </style>
+                `;
+            } else if (newValue.indexOf('low') > -1) {
+                this.shadowRoot.innerHTML += `
+                    <style>
+                        .text {
+                            color: blue;
+                        }
+                    </style>
+                `;
+            }
             this.shadowRoot.querySelector('.text').innerText = newValue;
         }
 	}
